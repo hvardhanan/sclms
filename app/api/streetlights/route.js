@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 
 export async function GET() {
   if (!mongoose.connections[0].readyState) {
-    await mongoose.connect('mongodb://localhost:27017', {
+    await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
@@ -17,7 +17,7 @@ export async function GET() {
 
 export async function POST(req) {
   if (!mongoose.connections[0].readyState) {
-    await mongoose.connect('mongodb://localhost:27017', {
+    await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });

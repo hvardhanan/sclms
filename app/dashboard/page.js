@@ -1,5 +1,5 @@
 // app/dashboard/page.js
-import Dashboard from '../../components/Dashboard';
+import Dashboard from '../components/Dashboard';
 
 export default function DashboardPage() {
   return (
