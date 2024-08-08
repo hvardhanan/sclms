@@ -1,5 +1,5 @@
 // models/StreetLight.js
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const StreetLightSchema = new mongoose.Schema({
   id: { type: String, required: true },
@@ -8,4 +8,4 @@ const StreetLightSchema = new mongoose.Schema({
   workingCondition: { type: Boolean, required: true }
 });
 
-module.exports = mongoose.models.StreetLight || mongoose.model('StreetLight', StreetLightSchema);
+export const StreetLight = mongoose.models.StreetLight || mongoose.model('StreetLight', StreetLightSchema);

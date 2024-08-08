@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next server.js",
-    "start": "NODE_ENV=production node server.js",
+    "dev": "node server.js",
     "build": "next build",
+    "start": "NODE_ENV=production node server.js",
     "lint": "next lint"
   },
   "dependencies": {
@@ -25,6 +25,7 @@
   "description": "This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).",
   "main": "tailwind.config.js",
   "keywords": [],
+  "type": "module",
   "author": "",
   "license": "ISC"
 }

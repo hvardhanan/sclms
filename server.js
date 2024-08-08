@@ -1,8 +1,7 @@
-// server.js
-const express = require('express');
-const next = require('next');
-const mongoose = require('mongoose');
-const StreetLight = require('./models/StreetLight'); // Adjust the path if needed
+import express from 'express';
+import next from 'next';
+import mongoose from 'mongoose';
+import { StreetLight } from './models/StreetLight.js';
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
