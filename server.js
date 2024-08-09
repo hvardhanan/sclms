@@ -7,7 +7,7 @@ const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-mongoose.connect(process.env.MONGODB_URI, {
+mongoose.connect("mongodb://localhost:27017", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
