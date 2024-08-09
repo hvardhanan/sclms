@@ -3,6 +3,7 @@ import next from 'next';
 import mongoose from 'mongoose';
 import { StreetLight } from './models/StreetLight.js';
 
+const socket = require('socket.io');
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();

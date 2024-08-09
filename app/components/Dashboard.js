@@ -121,8 +121,8 @@ const styles = {
   },
   cancelButton: {
     padding: '0.5rem 1rem',
-    backgroundColor: '#ccc',
-    color: 'black',
+    backgroundColor: '#eb4934',
+    color: 'white',
     border: 'none',
     borderRadius: '5px',
     cursor: 'pointer',
@@ -241,7 +241,7 @@ const Dashboard = () => {
                   <td style={styles.td}>{light.dateOfFixing}</td>
                   <td style={styles.td}>{light.intensity}</td>
                   <td style={styles.td}>
-                    <button onClick={() => handleDelete(light.id)}>Delete</button>
+                    <button onClick={() => handleDelete(light.id)} style={styles.cancelButton}>Delete</button>
                   </td>
                 </tr>
               ))}
