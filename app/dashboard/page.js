@@ -1,10 +1,15 @@
-// app/dashboard/page.js
-import Dashboard from '../components/Dashboard';
+import { getSession } from '@auth0/nextjs-auth0';
+import { redirect } from 'next/navigation';
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const session = await getSession();
+
+  if (!session || !session.user) {
+    // Redirect to login if not authenticated
+    redirect('/api/auth/login');
+  }
+
   return (
-    <div>
-      <Dashboard />
-    </div>
+    <Dashboard/>
   );
 }
