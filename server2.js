@@ -71,6 +71,26 @@ app.get('/api/streetlights', async (req, res) => {
   res.json(streetLights);
 });
 
+app.get('/api/streetlights', async (req, res) => {
+    const { location } = req.query;
+  
+    // Create a query object
+    const query = {};
+  
+    // Add location to the query if it exists
+    if (location) {
+      query.location = location;
+    }
+  
+    // Fetch the filtered street lights from the database
+    const streetLights = await StreetLight.find(query);
+    
+    // Send the filtered data back to the client
+    res.json(streetLights);
+  });
+  
+  
+
 app.post('/api/streetlights', async (req, res) => {
   const newLight = new StreetLight(req.body);
   await newLight.save();
