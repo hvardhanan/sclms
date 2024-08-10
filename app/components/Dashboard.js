@@ -1,13 +1,15 @@
-'use client'
+'use client';
 import { useState, useEffect } from 'react';
-import Modal from './Modal';
+import { io } from 'socket.io-client';
 
 const styles = {
   container: {
-    minHeight: '100vh',
+    width: '100%',
+    height: '100vh',
     display: 'flex',
     flexDirection: 'column',
     backgroundColor: '#fff',
+    overflow: 'hidden',
   },
   header: {
     width: '100%',
@@ -16,6 +18,7 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottom: '1px solid #eaeaea',
+    boxSizing: 'border-box',
   },
   createButton: {
     padding: '0.5rem 1rem',
@@ -32,12 +35,19 @@ const styles = {
     fontSize: '1.25rem',
     color: '#333',
   },
-  profileIcon: {
+  logOutButton: {
+    padding: '0.4rem 1rem',
+    backgroundColor: '#FF999C',
+    color: 'white',
+    border: '0.5px',
+    borderRadius: '5px',
     cursor: 'pointer',
+    fontSize: '1rem',
   },
   contentWrapper: {
     flex: 1,
-    padding: '2rem',
+    padding: '1rem',
+    overflowY: 'auto',
   },
   main: {
     display: 'flex',
@@ -57,26 +67,25 @@ const styles = {
     border: '1px solid #000',
     padding: '8px',
     paddingLeft: '10px',
-    backgroundColor: '#333',
+    backgroundColor: '#334',
     color: '#fff',
-    textAlign: 'left',
+    textAlign: 'center',
   },
   td: {
     border: '1px solid #000',
     padding: '8px',
-    textAlign: 'left',
+    textAlign: 'center',
     backgroundColor: '#FAF9F6',
     color: '#000',
   },
   footer: {
-    width: '100%',
-    padding: '2rem 0',
+    padding: '0.5rem',
     borderTop: '2px solid #eaeaea',
     display: 'flex',
     justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: 'white',
     color: 'black',
+    boxSizing: 'border-box',
   },
   modalOverlay: {
     position: 'fixed',
@@ -94,7 +103,8 @@ const styles = {
     backgroundColor: 'white',
     padding: '2rem',
     borderRadius: '10px',
-    width: '300px',
+    width: '90%',
+    maxWidth: '600px',
     boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
   },
   input: {
@@ -121,12 +131,79 @@ const styles = {
   },
   cancelButton: {
     padding: '0.5rem 1rem',
-    backgroundColor: '#eb4934',
+    backgroundColor: '#E97451',
     color: 'white',
     border: 'none',
     borderRadius: '5px',
     cursor: 'pointer',
     fontSize: '1rem',
+  },
+  deleteButton: {
+    padding: '0.1rem 1rem',
+    backgroundColor: '#E97451',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    fontSize: '0.8rem',
+  },
+  '@media (max-width: 1024px)': {
+    container: {
+      padding: '0.5rem',
+    },
+    headerText: {
+      fontSize: '1rem',
+    },
+    createButton: {
+      padding: '0.3rem 0.6rem',
+      fontSize: '0.875rem',
+    },
+    table: {
+      width: '100%',
+    },
+    modalContent: {
+      width: '80%',
+    },
+  },
+  '@media (max-width: 768px)': {
+    container: {
+      padding: '0.5rem',
+    },
+    headerText: {
+      fontSize: '1rem',
+    },
+    createButton: {
+      padding: '0.3rem 0.6rem',
+      fontSize: '0.875rem',
+    },
+    table: {
+      width: '100%',
+    },
+    modalContent: {
+      width: '90%',
+    },
+  },
+  '@media (max-width: 480px)': {
+    container: {
+      padding: '0.25rem',
+    },
+    header: {
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+    },
+    createButton: {
+      padding: '0.3rem 0.5rem',
+      fontSize: '0.75rem',
+    },
+    headerText: {
+      fontSize: '0.875rem',
+    },
+    table: {
+      fontSize: '0.875rem',
+    },
+    modalContent: {
+      width: '95%',
+    },
   },
 };
 
@@ -137,8 +214,8 @@ const Dashboard = () => {
   const [newLight, setNewLight] = useState({
     id: '',
     dateOfFixing: '',
-    intensity: '',
-    workingCondition: true,
+    intensity: 0,
+    workingCondition: 'Working',
   });
 
   useEffect(() => {
@@ -150,6 +227,20 @@ const Dashboard = () => {
 
     fetchStreetLights();
   }, []);
+
+  useEffect(() => {
+    const socket = io('http://localhost:3000'); // Make sure the port matches server2.js
+  
+    socket.on('streetlights', (data) => {
+      console.log('Received data:', data); // Debugging line
+      setStreetLights(data);
+    });
+  
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+  
 
   const handleDelete = async (id) => {
     const res = await fetch(`/api/streetlights/${id}`, {
@@ -214,6 +305,10 @@ const Dashboard = () => {
     setIsModalOpen(false);
   };
 
+  const handleLogout = () => {
+    window.location.href = '/api/auth/logout';
+  };
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
@@ -221,7 +316,9 @@ const Dashboard = () => {
           Create Light
         </button>
         <div style={styles.headerText}>Street Lights Dashboard</div>
-        <div style={styles.profileIcon}>👤</div>
+        <button style={styles.logOutButton} onClick={handleLogout}>
+          Log out
+        </button>
       </header>
       <div style={styles.contentWrapper}>
         <main style={styles.main}>
@@ -231,17 +328,22 @@ const Dashboard = () => {
                 <th style={styles.th}>ID</th>
                 <th style={styles.th}>Date of Fixing</th>
                 <th style={styles.th}>Intensity</th>
+                <th style={styles.th}>Status</th>
                 <th style={styles.th}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {streetLights.map((light) => (
+
                 <tr key={light.id}>
                   <td style={styles.td}>{light.id}</td>
                   <td style={styles.td}>{light.dateOfFixing}</td>
                   <td style={styles.td}>{light.intensity}</td>
+                  <td style={styles.td}>{light.workingCondition}</td>
                   <td style={styles.td}>
-                    <button onClick={() => handleDelete(light.id)} style={styles.cancelButton}>Delete</button>
+                    <button style={styles.deleteButton} onClick={() => handleDelete(light.id)}>
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -256,69 +358,47 @@ const Dashboard = () => {
       {isModalOpen && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalContent}>
-          <form onSubmit={handleSubmit}>
-            <div>
-            <label>ID:</label>
-            <input
-              type="text"
-              name="id"
-              value={newLight.id}
-              style={styles.input}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div>
-            <label>Date of Fixing:</label>
-            <input
-              type="date"
-              name="dateOfFixing"
-              style={styles.input}
-              value={newLight.dateOfFixing}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div>
-            <label>Intensity:</label>
-            <input
-              type="number"
-              name="intensity"
-              value={newLight.intensity}
-              style={styles.input}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div>
-            <label>Working Condition:</label>
-            <select
-              name="workingCondition"
-              value={newLight.workingCondition}
-              onChange={(e) =>
-                setNewLight({ ...newLight, workingCondition: e.target.value === 'true' })
-              }
-            >
-              <option value="true">Working</option>
-              <option value="false">Not Working</option>
-            </select>
-          </div>
-          
-            <div style={styles.modalButtons}>
-              <button style={styles.addButton} onClick={startEditing} type='submit'>
-                Add Light
-              </button>
-              <button style={styles.cancelButton} onClick={handleCloseModal}>
-                Cancel
-              </button>
-            </div>
+            <h2>{editingLight ? 'Edit Light' : 'Add Light'}</h2>
+            <form onSubmit={editingLight ? handleEdit : handleSubmit}>
+              <input
+                type="text"
+                name="id"
+                value={newLight.id}
+                onChange={handleChange}
+                placeholder="ID"
+                style={styles.input}
+                required
+              />
+              <input
+                type="date"
+                name="dateOfFixing"
+                value={newLight.dateOfFixing}
+                onChange={handleChange}
+                style={styles.input}
+                required
+              />
+              <input
+                type="number"
+                name="intensity"
+                value={newLight.intensity}
+                onChange={handleChange}
+                placeholder="Intensity"
+                style={styles.input}
+                required
+              />
+              <div style={styles.modalButtons}>
+                <button type="submit" style={styles.addButton}>
+                  {editingLight ? 'Save' : 'Add'}
+                </button>
+                <button type="button" onClick={handleCloseModal} style={styles.cancelButton}>
+                  Cancel
+                </button>
+              </div>
             </form>
           </div>
         </div>
       )}
     </div>
   );
-
 };
-
 export default Dashboard;
