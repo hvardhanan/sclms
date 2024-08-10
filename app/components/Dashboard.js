@@ -4,12 +4,11 @@ import { useState, useEffect } from 'react';
 const styles = {
   container: {
     width: '100%',
-    height: '100vh', 
+    height: '100vh',
     display: 'flex',
     flexDirection: 'column',
     backgroundColor: '#fff',
-    overflow: 'hidden', 
-    
+    overflow: 'hidden',
   },
   header: {
     width: '100%',
@@ -18,7 +17,7 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottom: '1px solid #eaeaea',
-    boxSizing: 'border-box', 
+    boxSizing: 'border-box',
   },
   createButton: {
     padding: '0.5rem 1rem',
@@ -35,13 +34,19 @@ const styles = {
     fontSize: '1.25rem',
     color: '#333',
   },
-  profileIcon: {
+  logOutButton: {
+    padding: '0.4rem 1rem',
+    backgroundColor: '#FF999C',
+    color: 'white',
+    border: '0.5px',
+    borderRadius: '5px',
     cursor: 'pointer',
+    fontSize: '1rem',
   },
   contentWrapper: {
     flex: 1,
-    padding: '1rem', 
-    overflowY: 'auto', 
+    padding: '1rem',
+    overflowY: 'auto',
   },
   main: {
     display: 'flex',
@@ -98,7 +103,7 @@ const styles = {
     padding: '2rem',
     borderRadius: '10px',
     width: '90%',
-    maxWidth: '600px', 
+    maxWidth: '600px',
     boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
   },
   input: {
@@ -141,7 +146,7 @@ const styles = {
     cursor: 'pointer',
     fontSize: '0.8rem',
   },
-  '@media (max-width: 1024px)': { 
+  '@media (max-width: 1024px)': {
     container: {
       padding: '0.5rem',
     },
@@ -159,7 +164,7 @@ const styles = {
       width: '80%',
     },
   },
-  '@media (max-width: 768px)': { 
+  '@media (max-width: 768px)': {
     container: {
       padding: '0.5rem',
     },
@@ -177,7 +182,7 @@ const styles = {
       width: '90%',
     },
   },
-  '@media (max-width: 480px)': { 
+  '@media (max-width: 480px)': {
     container: {
       padding: '0.25rem',
     },
@@ -285,6 +290,11 @@ const Dashboard = () => {
     setIsModalOpen(false);
   };
 
+  const handleLogout = () => {
+    // Handle logout logic here
+    console.log('Logging out...');
+  };
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
@@ -292,7 +302,9 @@ const Dashboard = () => {
           Create Light
         </button>
         <div style={styles.headerText}>Street Lights Dashboard</div>
-        <div style={styles.profileIcon}>👤</div>
+        <button style={styles.logOutButton} onClick={handleLogout}>
+          Log out
+        </button>
       </header>
       <div style={styles.contentWrapper}>
         <main style={styles.main}>
