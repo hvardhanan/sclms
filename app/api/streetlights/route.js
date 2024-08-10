@@ -3,7 +3,10 @@ import { NextResponse } from 'next/server';
 import StreetLight from '../../../models/StreetLight';
 import mongoose from 'mongoose';
 
-export async function GET() {
+export async function GET(req) {
+  const { searchParams } = new URL(req.url);
+  const location = searchParams.get('location') || '';
+
   if (!mongoose.connections[0].readyState) {
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
@@ -11,7 +14,9 @@ export async function GET() {
     });
   }
 
-  const streetlights = await StreetLight.find();
+  const filter = location ? { location } : {};  // Filter by location if provided
+
+  const streetlights = await StreetLight.find(filter);  // Query the database
   return NextResponse.json(streetlights);
 }
 

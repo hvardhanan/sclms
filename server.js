@@ -23,6 +23,19 @@ app.prepare().then(() => {
     res.json(streetlights);
   });
 
+  server.get('/api/streetlights', async (req, res) => {
+    const { location, workingCondition } = req.query;
+  
+    const query = {};
+    if (location) query.location = location;
+    if (workingCondition !== undefined) query.workingCondition = workingCondition === 'true';
+  
+    const streetlights = await StreetLight.find(query);
+    res.json(streetlights);
+  });
+  
+  
+
   server.post('/api/streetlights', async (req, res) => {
     const newStreetLight = new StreetLight(req.body);
     await newStreetLight.save();
