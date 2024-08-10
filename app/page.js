@@ -1,12 +1,16 @@
-// app/page.js
+import { getSession } from '@auth0/nextjs-auth0';
+import { redirect } from 'next/navigation';
 import Dashboard from './components/Dashboard';
 
-require('dotenv').config();
+export default async function Page() {
+  const session = await getSession();
 
-export default function HomePage() {
+  if (!session || !session.user) {
+    redirect('/api/auth/login'); // Redirect to login if not authenticated
+    return null; // Return null or a placeholder while redirecting
+  }
+
   return (
-    <div>
-      <Dashboard />
-    </div>
+    <Dashboard/>
   );
 }
