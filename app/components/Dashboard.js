@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 
 const styles = {
   container: {
@@ -213,8 +214,8 @@ const Dashboard = () => {
   const [newLight, setNewLight] = useState({
     id: '',
     dateOfFixing: '',
-    intensity: '',
-    workingCondition: true,
+    intensity: 0,
+    workingCondition: 'Working',
   });
 
   useEffect(() => {
@@ -226,6 +227,20 @@ const Dashboard = () => {
 
     fetchStreetLights();
   }, []);
+
+  useEffect(() => {
+    const socket = io('http://localhost:3000'); // Make sure the port matches server2.js
+  
+    socket.on('streetlights', (data) => {
+      console.log('Received data:', data); // Debugging line
+      setStreetLights(data);
+    });
+  
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+  
 
   const handleDelete = async (id) => {
     const res = await fetch(`/api/streetlights/${id}`, {
@@ -291,8 +306,7 @@ const Dashboard = () => {
   };
 
   const handleLogout = () => {
-    // Handle logout logic here
-    console.log('Logging out...');
+    window.location.href = '/api/auth/logout';
   };
 
   return (
@@ -314,15 +328,18 @@ const Dashboard = () => {
                 <th style={styles.th}>ID</th>
                 <th style={styles.th}>Date of Fixing</th>
                 <th style={styles.th}>Intensity</th>
+                <th style={styles.th}>Status</th>
                 <th style={styles.th}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {streetLights.map((light) => (
+
                 <tr key={light.id}>
                   <td style={styles.td}>{light.id}</td>
                   <td style={styles.td}>{light.dateOfFixing}</td>
                   <td style={styles.td}>{light.intensity}</td>
+                  <td style={styles.td}>{light.workingCondition}</td>
                   <td style={styles.td}>
                     <button style={styles.deleteButton} onClick={() => handleDelete(light.id)}>
                       Delete
