@@ -1,0 +1,72 @@
+import serial
+from pymongo import MongoClient
+from datetime import datetime
+
+# Initialize serial connection
+ser = serial.Serial('COM7', 115200, timeout=1)
+
+# Initialize MongoDB connection
+client = MongoClient('mongodb://localhost:27017/')
+db = client['test']
+collection = db['streetlights']
+
+prev_intensity = None
+fluctuation_count = 0
+fluctuation_threshold = 200
+
+def is_nighttime():
+    current_time = datetime.now().time()
+    return current_time >= datetime.strptime('18:00', '%H:%M').time() or current_time < datetime.strptime('11:00', '%H:%M').time()
+
+def update_database(light_id, light_intensity, fluctuation_count):
+    status = 'On'
+    if is_nighttime():
+        if fluctuation_count > 15:
+            status = 'Fluctuated'
+        elif light_intensity < 500:
+            status = 'Faulty'
+    else:
+        status = 'Faulty' if light_intensity >= 500 else 'Off'
+
+    data = {
+        "id": light_id,
+        "intensity": light_intensity,
+        "workingCondition": status,
+        "fluctuationCount": fluctuation_count
+    }
+
+    try:
+        collection.update_one(
+            {"id": light_id},
+            {"$set": data},
+            upsert=True
+        )
+        print(f"Data inserted/updated: {data}")
+    except Exception as e:
+        print(f"Error updating database: {e}")
+
+try:
+    while True:
+        if ser.in_waiting > 0:
+            line = ser.readline().decode('utf-8').rstrip()
+            print(f"Data received: {line}")
+
+            try:
+                light_intensity = float(line)
+                light_id = "00001"  # This could be dynamic if needed
+
+                if is_nighttime() and prev_intensity is not None and light_intensity > 500:
+                    if abs(light_intensity - prev_intensity) > fluctuation_threshold:
+                        fluctuation_count += 1
+                        print(f"Fluctuation detected! Total count: {fluctuation_count}")
+
+                prev_intensity = light_intensity
+                update_database(light_id, light_intensity, fluctuation_count)
+
+            except ValueError:
+                print("Received invalid data")
+
+except KeyboardInterrupt:
+    print("Serial connection closed.")
+finally:
+    ser.close()
