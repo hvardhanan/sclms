@@ -18,7 +18,7 @@ const generatePDF = (lights) => {
   lights.forEach((light) => {
     const row = [
       light.id,
-      light.dateOfFixing,
+      String(light.dateOfFixing).slice(0, 10),
       light.intensity,
       light.workingCondition,
       light.location
