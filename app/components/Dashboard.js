@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
+import generatePDF from './GeneratePDF';
 
 const styles = {
 	container: {
@@ -207,11 +208,30 @@ const styles = {
 	},
 };
 
-
 const Dashboard = () => {
 	const [streetLights, setStreetLights] = useState([]);
-	const [filter, setFilter] = useState({ location: '' });
+	const [filter, setFilter] = useState({ location: '', status: '' });
+	const [locations, setLocations] = useState([]); // State for storing locations
+	const [newLight, setNewLight] = useState({
+		id: '',
+		dateOfFixing: '',
+		intensity: '',
+		workingCondition: '',
+		location: '',
+	});
+	const [editingLight, setEditingLight] = useState(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
+
+	// Fetch locations from the server
+	useEffect(() => {
+		const fetchLocations = async () => {
+			const res = await fetch('/api/locations');
+			const data = await res.json();
+			setLocations(data);
+		};
+
+		fetchLocations();
+	}, []); // Run this effect only once when the component mounts
 
 	// Fetch street lights when the filter changes
 	useEffect(() => {
@@ -223,24 +243,23 @@ const Dashboard = () => {
 		};
 
 		fetchStreetLights();
+	}, [filter]); // Re-run the effect when the filter changes
+
+	// Re-fetch the street lights every 100ms
+	useEffect(() => {
+		const interval = setInterval(() => {
+			const fetchStreetLights = async () => {
+				const query = new URLSearchParams(filter).toString();
+				const res = await fetch(`/api/streetlights?${query}`);
+				const data = await res.json();
+				setStreetLights(data);
+			};
+
+			fetchStreetLights();
+		}, 100);
+
+		return () => clearInterval(interval);
 	}, [filter]);
-
-  
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const fetchStreetLights = async () => {
-        const query = new URLSearchParams(filter).toString();
-        const res = await fetch(`/api/streetlights?${query}`);
-        const data = await res.json();
-        setStreetLights(data);
-      };
-
-      fetchStreetLights();
-    }, 100);
-
-    return () => clearInterval(interval);
-  }, [filter]);
-
 
 	// Socket connection for real-time updates
 	useEffect(() => {
@@ -271,6 +290,77 @@ const Dashboard = () => {
 		}
 	};
 
+	const handleChange = (e) => {
+		const { name, value } = e.target;
+		setNewLight((prev) => ({
+			...prev,
+			[name]: value,
+		}));
+	};
+
+	const handleSubmit = async (e) => {
+		e.preventDefault();
+		const res = await fetch('/api/streetlights', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(newLight),
+		});
+
+		if (res.ok) {
+			const newLight = await res.json();
+			setStreetLights((prev) => [...prev, newLight]);
+			setNewLight({
+				id: '',
+				dateOfFixing: '',
+				intensity: '',
+				workingCondition: '',
+				location: '',
+			});
+			setIsModalOpen(false);
+		} else {
+			console.error('Failed to create new street light');
+		}
+	};
+
+	const handleEdit = async (id) => {
+		const lightToEdit = streetLights.find((light) => light.id === id);
+		setEditingLight(lightToEdit);
+		setIsModalOpen(true);
+	};
+
+  const handleGeneratePDF = () => {
+    // Fetch or filter the faulty and fluctuating lights data
+    const faultyAndFluctuatingLights = streetLights.filter(light =>
+      light.workingCondition === 'Faulty' || light.workingCondition === 'Fluctuated'
+    );
+  
+    generatePDF(faultyAndFluctuatingLights);
+  };
+  
+
+	const handleUpdate = async () => {
+		const res = await fetch(`/api/streetlights/${editingLight.id}`, {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(editingLight),
+		});
+
+		if (res.ok) {
+			const updatedLight = await res.json();
+			setStreetLights((prev) =>
+				prev.map((light) => (light.id === updatedLight.id ? updatedLight : light))
+			);
+			setEditingLight(null);
+			setIsModalOpen(false);
+		} else {
+			console.error('Failed to update street light');
+		}
+	};
+
 	const handleOpenModal = () => {
 		setIsModalOpen(true);
 	};
@@ -283,12 +373,11 @@ const Dashboard = () => {
 		window.location.href = '/api/auth/logout';
 	};
 
-	// Filter the streetLights array based on the selected location
-	const filteredStreetLights = streetLights.filter(light => {
-		if (filter.location) {
-			return light.location === filter.location;
-		}
-		return true; // if no filter is selected, return all
+	// Filter the streetLights array based on the selected location and status
+	const filteredStreetLights = streetLights.filter((light) => {
+		const locationMatches = filter.location ? light.location === filter.location : true;
+		const statusMatches = filter.status ? light.workingCondition === filter.status : true;
+		return locationMatches && statusMatches;
 	});
 
 	return (
@@ -311,11 +400,25 @@ const Dashboard = () => {
 						style={styles.input}
 					>
 						<option value="">All Locations</option>
-						<option value="Sriperumbudur">Sriperumbudur</option>
-						<option value="Location2">Location 2</option>
-						<option value="Location3">Location 3</option>
+            <option value={'Sriperumbudur'}>Sriperumbudur</option>
+            <option value={'Chennai'}>Chennai</option>
 					</select>
 				</div>
+				<div>
+					<select
+						name="status"
+						value={filter.status}
+						onChange={handleFilterChange}
+						style={styles.input}
+					>
+						<option value="">All Statuses</option>
+						<option value="On">On</option>
+						<option value="Off">Off</option>
+						<option value="Fluctuated">Fluctuated</option>
+            <option value="Faulty">Faulty</option>
+					</select>
+				</div>
+        <div><button onClick={handleGeneratePDF} style={styles.addButton}>Generate PDF</button></div>
 			</header>
 			<div style={styles.contentWrapper}>
 				<main style={styles.main}>
@@ -348,7 +451,7 @@ const Dashboard = () => {
 								))
 							) : (
 								<tr>
-									<td style={styles.td} colSpan="6">No street lights found for this location.</td>
+									<td style={styles.td} colSpan="6">No street lights found for the selected filters.</td>
 								</tr>
 							)}
 						</tbody>
@@ -358,9 +461,65 @@ const Dashboard = () => {
 			<footer style={styles.footer}>
 				<p>Street Light Management System</p>
 			</footer>
+			{isModalOpen && (
+				<div style={styles.modalOverlay}>
+					<div style={styles.modalContent}>
+						<h2>{editingLight ? 'Edit Street Light' : 'Create Street Light'}</h2>
+						<form onSubmit={editingLight ? handleUpdate : handleSubmit}>
+							<input
+								type="text"
+								name="id"
+								placeholder="ID"
+								value={newLight.id}
+								onChange={handleChange}
+								style={styles.input}
+							/>
+							<input
+								type="date"
+								name="dateOfFixing"
+								placeholder="Date of Fixing"
+								value={newLight.dateOfFixing}
+								onChange={handleChange}
+								style={styles.input}
+							/>
+							<input
+								type="text"
+								name="intensity"
+								placeholder="Intensity"
+								value={newLight.intensity}
+								onChange={handleChange}
+								style={styles.input}
+							/>
+							<input
+								type="text"
+								name="workingCondition"
+								placeholder="Status"
+								value={newLight.workingCondition}
+								onChange={handleChange}
+								style={styles.input}
+							/>
+							<input
+								type="text"
+								name="location"
+								placeholder="Location"
+								value={newLight.location}
+								onChange={handleChange}
+								style={styles.input}
+							/>
+							<div style={styles.modalButtons}>
+								<button type="submit" style={styles.addButton}>
+									{editingLight ? 'Update' : 'Add'}
+								</button>
+								<button type="button" style={styles.cancelButton} onClick={handleCloseModal}>
+									Cancel
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 };
-
 
 export default Dashboard;
